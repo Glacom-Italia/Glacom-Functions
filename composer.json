@@ -5,7 +5,7 @@
     "license": "mit",
     "autoload": {
         "psr-4": {
-            "Glacom\\GlacomFunctions\\": "src/"
+            "Glacom\\Functions\\": "src/"
         }
     },
     "authors": [
