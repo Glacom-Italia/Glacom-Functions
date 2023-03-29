@@ -1,12 +1,12 @@
 {
     "name": "glacom/glacom-functions",
-    "version": "1.1",
+    "version": "1.0",
     "description": "Glacom functions for Laravel",
     "type": "library",
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Glacom\\": "src/"
+            "Glacom\\Functions\\": "src/"
         }
     },
     "authors": [
