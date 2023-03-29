@@ -3,7 +3,7 @@
     "version": "1.0",
     "description": "Glacom functions for Laravel",
     "type": "library",
-    "license": "mit",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Glacom\\Functions\\": "src/"
@@ -15,5 +15,8 @@
         }
     ],
     "minimum-stability": "stable",
-    "require": {}
+    "require": {
+        "php": "^7.3|^8.0",
+        "laravel/nova": "^4.0",
+    }
 }
