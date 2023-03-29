@@ -14,7 +14,8 @@
             "name": "y"
         }
     ],
-    "minimum-stability": "stable",
+    "minimum-stability" : "dev",
+    "prefer-stable" : true,
     "require": {
         "php": "^7.3|^8.0",
         "laravel/nova": "^4.0"
