@@ -1,5 +1,5 @@
 {
-    "name": "glacom/glacom-functions",
+    "name": "glacom/functions",
     "version": "1.2",
     "description": "Glacom functions for Laravel",
     "type": "library",
@@ -14,8 +14,8 @@
             "name": "Global Accelerationist Company"
         }
     ],
-    "minimum-stability" : "dev",
-    "prefer-stable" : true,
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "require": {
         "php": "^7.3|^8.0",
         "laravel/nova": "^4.0"
