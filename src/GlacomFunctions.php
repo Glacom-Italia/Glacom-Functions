@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Nova\Custom;
+namespace Glacom\Functions;
 
 use Illuminate\Support\Facades\DB;
 use Laravel\Nova\Fields\Boolean;
