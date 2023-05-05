@@ -9,8 +9,8 @@ use Laravel\Nova\Fields\Textarea;
 use Laravel\Nova\Fields\Image;
 use Laravel\Nova\Fields\Number;
 use Laravel\Nova\Fields\File;
-use App\Models\CoreUrl;
-use App\Models\CoreUrlTemplate;
+use App\Models\Core\CoreUrl;
+use App\Models\Core\CoreUrlTemplate;
 
 use Illuminate\Support\Facades\Log;
 
@@ -22,12 +22,13 @@ class GlacomFunctions
      *
      * @param  string $url
      * @param  bool $lowercase
-     * @return App\Models\CoreUrl
+     * @return App\Models\Core\CoreUrl
     */
-    public function calculateURL($lang, $table, $useModrewrite=true, $resourceName, $model, $modelID){
+    public function calculateURL($lang, $table, $model, $modelID, $modelData, $resourceName, $resourceNameAlt=null, $useModrewrite=true){
 
         $newURL = '';
-        $data = $model::find($modelID);
+        if(!$modelData || is_null($modelData)) $data = $model::find($modelID);
+        else $data = $modelData;
 
         if(isset($table)){
             $tpl = CoreUrlTemplate::where('table', $table)->first();
@@ -45,17 +46,39 @@ class GlacomFunctions
                 }
 
                 if($urlTmp != ''){
+                    // {placeholder} di default presenti su tutte le table
+                    if(strpos($urlTmp, '{resourceID}'))
+                        $urlTmp = str_replace('{resourceID}', $data->id, $urlTmp);
+
+                    if(strpos($urlTmp, '{resourceName}'))
+                        $urlTmp = str_replace('{resourceName}', $data->name, $urlTmp);
+                    
+                    if(strpos($urlTmp, '{resourceTitle}'))
+                        $urlTmp = str_replace('{resourceTitle}', $data->title[$lang], $urlTmp);
+
                     switch($table){
                         case 'core-pages':
-                            if(strpos($urlTmp, '{resourceID}'))
-                                $urlTmp = str_replace('{resourceID}', $data->id, $urlTmp);
+                            break;
+                        case 'magazine-authors':
+                            if(strpos($urlTmp, '{magazineAuthorName}'))
+                                $urlTmp = str_replace('{magazineAuthorName}', $data->name, $urlTmp);
 
-                            if(strpos($urlTmp, '{resourceName}'))
-                                $urlTmp = str_replace('{resourceName}', $data->name, $urlTmp);
+                            if(strpos($urlTmp, '{magazineAuthorSurname}'))
+                                $urlTmp = str_replace('{magazineAuthorSurname}', $data->surname, $urlTmp);                            
                             
-                            if(strpos($urlTmp, '{resourceTitle}'))
-                                $urlTmp = str_replace('{resourceTitle}', $data->title[$lang], $urlTmp);
+                            break;
+                        case 'magazine-groups':
+                            break;
+                        case 'magazine-news':
+                            if(strpos($urlTmp, '{magazineNewsPublishDate}')){
+                                $dtTmp = explode(' ', $data->publish_datetime);
+                                $dtTmp2 = explode('-', $dtTmp);
+                                $urlTmp = str_replace('{magazineNewsPublishDate}', $dtTmp2[2].'-'.$dtTmp2[1].'-'.$dtTmp2[0], $urlTmp);
+                            }    
                             
+                            break;
+                        case 'magazine-tags':
+                            break;
                     }
                     
                     if(substr($urlTmp, 0, 1) == '/') $newURL = '/'.$lang.$urlTmp;
@@ -64,12 +87,17 @@ class GlacomFunctions
             }
         }
 
-        if($newURL == '' && $useModrewrite == true){
+        if($useModrewrite == true && !is_null($data->modrewrite[$lang]) && trim($data->modrewrite[$lang]) != ''){ //$newURL == '' && 
+            //se c'è modrewrite custom sovrascrivo template
             $newURL = '/'.$lang.'/'.$data->modrewrite[$lang];
         }
 
-        if($newURL == ''){
+        if($newURL == '' && !is_null($resourceName) && $resourceName!=''){
             $newURL = '/'.$lang.'/'.$resourceName;
+        }
+
+        if($newURL == '' && !is_null($resourceNameAlt) && $resourceNameAlt!=''){
+            $newURL = '/'.$lang.'/'.$resourceNameAlt;
         }
 
         return $newURL;
@@ -80,7 +108,7 @@ class GlacomFunctions
      *
      * @param  string $url
      * @param  bool $lowercase
-     * @return App\Models\CoreUrl
+     * @return string
     */
     public function cleanURL($string, $lowercase=true, $nospecialletter=true){
         
@@ -139,11 +167,11 @@ class GlacomFunctions
      * Get the Url information (model CoreUrl) giving url string.
      *
      * @param  string $url
-     * @return App\Models\CoreUrl
+     * @return App\Models\Core\CoreUrl
     */
     public function getUrlInfoByUrl($url){
         $url = CoreUrl::where('url', $url)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('updated_at', 'desc')
             ->first();
 
         if(!is_null($url)){
@@ -151,7 +179,7 @@ class GlacomFunctions
                 // trova ultimo record NON is_301
                 $url = CoreUrl::where('url', $url)
                     ->where('is_301', 0)
-                    ->orderBy('created_at', 'desc')
+                    ->orderBy('updated_at', 'desc')
                     ->first();
             }
         }
@@ -171,6 +199,7 @@ class GlacomFunctions
             ->where('table', $table)
             ->where('table_id', $table_id)
             ->orderBy('updated_at', 'desc')
+            ->orderBy('id', 'desc')
             ->first();
 
         if(!is_null($url)) return $url;
@@ -187,19 +216,19 @@ class GlacomFunctions
      * @param integer $table_id
      * @return string
     */
-    public function checkUniqueUrl($url, $locale, $table=null, $table_id=null){
+    public function checkUniqueUrl($locale, $url, $table=null, $table_id=null){
 
         if(!is_null($table) && !is_null($table_id)){
             $url = CoreUrl::where('url',$url)
                 ->where('locale', $locale)
-                ->where('is_404', 0)
+                //->where('is_404', 0) ???
                 ->whereNotIn('id', function($q) use($url, $locale, $table, $table_id){ 
                     $q->select('id')->from('core_urls')->where('url',$url)->where('locale', $locale)->where('table', $table)->where('table_id', $table_id); 
                 })->first();
         }else{
             $url = CoreUrl::where('url',$url)
                 ->where('locale', $locale)
-                ->where('is_404', 0)
+                //->where('is_404', 0) ??
                 ->first();
         }
         if(!is_null($url)){
@@ -210,130 +239,104 @@ class GlacomFunctions
     }
 
     /**
-     * Check if the giving url is unique.
+     * Insert new url in core_urls.
+     *
+     * @param string $locale
+     * @param string $table
+     * @param integer $table_id
+     * @param string $url
+     * @param boolean $is301
+     * @param boolean $is404
+     * @param string $urlRedirect
+     * @return boolean
+    */
+    public function insertNewUrl($locale, $table, $table_id, $url, $is301=false, $is404=false, $urlRedirect=null){
+    
+        //Log::debug('insertNewUrl > '.$url.'|'.$is301.'|'.$is404.'|'.$urlRedirect);
+        $coreUrl = CoreUrl::create([
+            'locale' => $locale,
+            'core_page_id' => ($table=='core-pages') ? $table_id : $this->getPageIDbyTable($table),
+            'table' => $table,
+            'table_id' => $table_id,
+            'url' => $url,
+            'is_301' => $is301,
+            'is_404' => $is404,
+            'url_redirect' => $urlRedirect
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Retrive Url and update it in core_urls.
+     *
+     * @param string $locale
+     * @param string $table
+     * @param integer $table_id
+     * @param string $url
+     * @param boolean $is301
+     * @param boolean $is404
+     * @param string $urlRedirect
+     * @return boolean
+    */
+    public function updateCurrentUrl($locale, $table, $table_id, $url, $is301, $is404, $urlRedirect){
+    
+        $currentURL = $this->getUrlByInfo($locale, $table, $table_id);
+
+        if(isset($url) && !is_null($url)) $currentURL->url = $url;
+        if(isset($is301) && !is_null($is301)) $currentURL->is_301 = $is301;
+        if(isset($is404) && !is_null($is404)) $currentURL->is_404 = $is404;
+        if(isset($urlRedirect) && !is_null($urlRedirect)) $currentURL->url_redirect = $urlRedirect;
+        //Log::debug('updateCurrentUrl > '.$url.'|'.$is301.'|'.$is404.'|'.$urlRedirect);
+        $currentURL->save();
+
+        return true;
+    }
+
+    /**
+     * Check if insert or update url by resource.
      *
      * @param string $url
      * @param string $locale
      * @param string $table
      * @param integer $table_id
-     * @return string
+     * @param boolean $set_404
+     * @return boolean
     */
-    public function insertUpdateUrl($url, $locale, $table, $table_id, $set_404=false){
-
-        /*
-            cerca ultima occorrenza per locale, table, table_id
-            se set_404 = true
-                aggiorno vecchio come 404
-            else    
-                se url != new 
-                    se now() - updated_at > 24h 
-                        aggiorna vecchio come 301
-                        inserisce new
-                    else
-                        aggiorna vecchio con new
-                else 
-                    se vecchio is_404 e set_404 = false
-                        tolgo 404
-
-        */
+    public function checkInsertUpdateUrl($locale, $table, $table_id, $url, $is301=false, $is404=false, $urlRedirect=null){
         
-        $oldURL = $this->getUrlByInfo($locale, $table, $table_id);
+        $currentURL = $this->getUrlByInfo($locale, $table, $table_id);
         
-        if(!$oldURL){
-            // inserisco new
-            $coreUrl = CoreUrl::create([
-                'locale' => $locale,
-                'core_page_id' => ($table=='core-pages') ? $table_id : $this->getPageIDbyTable($table),
-                'table' => $table,
-                'table_id' => $table_id,
-                'url' => $url,
-                'is_301' => false,
-                'is_404' => $set_404,
-                'url_redirect' => null
-            ]);
+        if($url != $currentURL->url){
+            $start = new \DateTime($currentURL->updated_at);
+            $end = new \DateTime();
+
+            //determine what interval should be used - can change to weeks, months, etc
+            $interval = new \DateInterval('PT1H');
+
+            //create periods every hour between the two dates
+            $periods = new \DatePeriod($start, $interval, $end);
+
+            if(iterator_count($periods) >= 24){
+                //Log::debug('checkInsertUpdateUrl > difftime >24 [UPD+INS]');
+                // update old
+                $this->updateCurrentUrl($locale, $table, $table_id, $currentURL->url, true, false, $url);
+
+                // insert new
+                $this->insertNewUrl($locale, $table, $table_id, $url, $is301, $is404, $urlRedirect);
+                
+            }else{
+                //Log::debug('checkInsertUpdateUrl > difftime <24 [UPD]');
+                // update
+                $this->updateCurrentUrl($locale, $table, $table_id, $url, $is301, $is404, $urlRedirect);
+            }
+
+            return true;
 
         }else{
-            if($set_404 == true){
-                $oldURL->is_404 = true;
-                $oldURL->save();
+            return false;
 
-            }else{
-                if($oldURL->is_404 == true && $set_404 == false){
-                    if($oldURL->url == $url){
-                        $oldURL->is_404 = false;
-                        $oldURL->url_redirect = null;
-                        $oldURL->save();
-
-                    }else{
-                        $oldURL->url_redirect = $url;
-                        $oldURL->save();
-
-                        // inserisco new
-                        $coreUrl = CoreUrl::create([
-                            'locale' => $locale,
-                            'core_page_id' => ($table=='core-pages') ? $table_id : $this->getPageIDbyTable($table),
-                            'table' => $table,
-                            'table_id' => $table_id,
-                            'url' => $url,
-                            'is_301' => false,
-                            'is_404' => false,
-                            'url_redirect' => null
-                        ]);
-                    }
-                
-                }elseif($oldURL->is_301 == true && $set_404 == false){
-                    if($oldURL->url != $url){
-                        // inserisco new
-                        $coreUrl = CoreUrl::create([
-                            'locale' => $locale,
-                            'core_page_id' => ($table=='core-pages') ? $table_id : $this->getPageIDbyTable($table),
-                            'table' => $table,
-                            'table_id' => $table_id,
-                            'url' => $url,
-                            'is_301' => false,
-                            'is_404' => false,
-                            'url_redirect' => null
-                        ]);
-                    }
-
-                }else{
-                    if($oldURL->url != $url){
-                        $start = new \DateTime($oldURL->updated_at);
-                        $end = new \DateTime();
-
-                        //determine what interval should be used - can change to weeks, months, etc
-                        $interval = new \DateInterval('PT1H');
-
-                        //create periods every hour between the two dates
-                        $periods = new \DatePeriod($start, $interval, $end);
-
-                        if(iterator_count($periods) >= 24){
-                            $oldURL->is_301 = true;
-                            $oldURL->save();
-
-                            // inserisco new
-                            $coreUrl = CoreUrl::create([
-                                'locale' => $locale,
-                                'core_page_id' => ($table=='core-pages') ? $table_id : $this->getPageIDbyTable($table),
-                                'table' => $table,
-                                'table_id' => $table_id,
-                                'url' => $url,
-                                'is_301' => false,
-                                'is_404' => false,
-                                'url_redirect' => null
-                            ]);
-
-                        }else{
-                            $oldURL->url = $url;
-                            $oldURL->save();
-                        }
-                    }
-                }    
-            }
-        }    
-
-        return true;
-
+        }
     }
 
     /**
@@ -348,9 +351,94 @@ class GlacomFunctions
     }
 
     /**
+     * Create blade view if not already exists in giving directory.
+     *
+     * @param string $filename
+     * @param string $dir
+     * @return array
+    */
+    public function createViewsIfNotExists($filename, $dir = null){
+        $filenameWithDir = $filename;
+        if(!is_null($dir)) $filenameWithDir = $dir .'/'. $filename;
+        
+        if(!view()->exists($filenameWithDir)){
+            fopen(base_path('resources/views/'.$filenameWithDir), 'w');
+        }
+        return;
+    }
+
+    /**
+     * Convert array request with Stepanenko3\NovaJson\JSON fields in standard array
+     * es INPUT: 
+     * [ "name" => "prova", "title->it" => "prova titolo1", "title->en"=>null, "title->de"=>null ]
+     * 
+     * es OUTPUT: 
+     * [ "name" => "prova", "title" => ["it"=>"prova titolo1", "en"=>null, "de"=>null], ]
+     *
+     * @param array $arInput
+     * @return array
+    */
+    public function convertArrayRequest($arInput){
+        $arOut = array();
+        $arTmp = array();
+
+        foreach($arInput as $key => $value){
+            $pos = strpos($key, '->');
+            if($pos === false){
+                $arOut[$key] = $value;
+            }else{
+                $keyTmp = substr($key, 0, $pos);
+                $subkeyTmp = substr($key, $pos+2);
+                $valueTmp = $value;
+
+                if(!in_array($keyTmp, array_keys($arTmp))){
+                    $arTmp[$keyTmp] = [$subkeyTmp => $valueTmp];
+                }else{
+                    $valueTmp2 = $arTmp[$keyTmp];
+                    $valueTmp2[$subkeyTmp] = $valueTmp;
+                    $arTmp[$keyTmp] = $valueTmp2;
+                }    
+            }
+        }
+
+        return array_merge($arOut, $arTmp);
+    }
+
+    /**
+     * Display data in input in different type
+     *
+     * @param array $data
+     * @param string $typeView
+     * @return string
+    */
+    public function displayData($data, $typeView){
+        
+        $outData='';
+        if($typeView=='table'){
+            $outData.='<table style="width:100%;border:1px solid">';
+            foreach($data as $dataItem){
+                $outData.='<tr>';
+                $outData.='<td>';
+                $outData.=strtoupper($dataItem['lang']);
+                $outData.='</td>';
+                $outData.='<td>';
+                $outData.=$dataItem['url'];
+                $outData.='</td>';
+                $outData.='<td>';
+                $outData.='<a href="'.$dataItem['lang'].'" target="_blank">APRI</a>';
+                $outData.='</td>';
+                $outData.='</tr>';
+            }
+            $outData.='</table>';
+        }
+
+        return $outData;
+    }
+
+    /**
      * Get the Nova Custom Fields List giving data from model CoreCustomField.
      *
-     * @param  \App\Models\CoreCustomField  $cf
+     * @param  \App\Models\Core\CoreCustomField  $cf
      * @return array
     */
     public function generateNovaCustomField($cf){
