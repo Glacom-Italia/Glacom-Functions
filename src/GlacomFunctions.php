@@ -11,6 +11,7 @@ use Laravel\Nova\Fields\Number;
 use Laravel\Nova\Fields\File;
 use App\Models\Core\CoreUrl;
 use App\Models\Core\CoreUrlTemplate;
+use App\Models\Core\CorePage;
 
 use Illuminate\Support\Facades\Log;
 
@@ -346,7 +347,26 @@ class GlacomFunctions
      * @return array
     */
     public function getPageIDbyTable($table){
+        $module = '';
 
+        switch($table){
+            case 'magazine-authors':
+            case 'magazine-groups':
+            case 'magazine-news':
+            case 'magazine-tags':
+                $module = 'magazine';
+                break;
+
+        }
+
+        if($module != ''){
+            $page = CorePage::where('is_active', '1')
+                ->where('modules', 'LIKE', '"'.$module.'"')
+                ->first();
+            if(!is_null($page))
+                return $page->id;
+        }
+        
         return null;
     }
 
