@@ -2,6 +2,7 @@
 
 namespace Glacom\Functions;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Laravel\Nova\Fields\Boolean;
 use Laravel\Nova\Fields\Text;
@@ -9,9 +10,20 @@ use Laravel\Nova\Fields\Textarea;
 use Laravel\Nova\Fields\Image;
 use Laravel\Nova\Fields\Number;
 use Laravel\Nova\Fields\File;
+use Laravel\Nova\Fields\Hidden;
+use Laravel\Nova\Fields\Select;
+//use Laravel\Nova\Fields\MultiSelect;
+use Outl1ne\MultiselectField\Multiselect;
 use App\Models\Core\CoreUrl;
 use App\Models\Core\CoreUrlTemplate;
+//use per gestire oneToMany e manyToOne come custom fields per component
 use App\Models\Core\CorePage;
+use App\Models\Core\CoreBanner;
+use App\Models\Form\Form;
+use App\Models\Magazine\MagazineAuthor;
+use App\Models\Magazine\MagazineGroup;
+use App\Models\Magazine\MagazineNews;
+use App\Models\Magazine\MagazineTag;
 
 use Illuminate\Support\Facades\Log;
 
@@ -73,7 +85,7 @@ class GlacomFunctions
                         case 'magazine-news':
                             if(strpos($urlTmp, '{magazineNewsPublishDate}')){
                                 $dtTmp = explode(' ', $data->publish_datetime);
-                                $dtTmp2 = explode('-', $dtTmp);
+                                $dtTmp2 = explode('-', $dtTmp[0]);
                                 $urlTmp = str_replace('{magazineNewsPublishDate}', $dtTmp2[2].'-'.$dtTmp2[1].'-'.$dtTmp2[0], $urlTmp);
                             }    
                             
@@ -467,7 +479,11 @@ class GlacomFunctions
         $langAv = config('app.lang');
             
         foreach($cf as $cfItem){
+
+            if(is_array($cfItem)) $cfItem = (object)$cfItem;
+
             $sizeTmp = ($cfItem->size) ? $cfItem->size : 'w-full';
+            $labelTmp = ($cfItem->label) ? $cfItem->label : $cfItem->name;
             switch($cfItem->type){
                 case 'text':
                     if($cfItem->is_multilanguage == true){
@@ -481,7 +497,7 @@ class GlacomFunctions
                             $listCustomField[] = $tmpField;
                         }
                     }else{
-                        $tmpField = Text::make($cfItem->name)
+                        $tmpField = Text::make($labelTmp, $cfItem->name)
                                         ->size($sizeTmp)
                                         ->hideFromIndex();
                         if($cfItem->is_required === true) $tmpField->rules('required');
@@ -504,7 +520,7 @@ class GlacomFunctions
                             $listCustomField[] = $tmpField;
                         }
                     }else{
-                        $tmpField = Textarea::make($cfItem->name)
+                        $tmpField = Textarea::make($labelTmp, $cfItem->name)
                                         ->alwaysShow()
                                         ->size($sizeTmp)
                                         ->hideFromIndex();
@@ -533,7 +549,7 @@ class GlacomFunctions
                             $listCustomField[] = $tmpField;
                         }
                     }else{
-                        $tmpField = Number::make($cfItem->name)
+                        $tmpField = Number::make($labelTmp, $cfItem->name)
                                         ->size($sizeTmp)
                                         ->hideFromIndex();
                         if($cfItem->is_required == true) $tmpField->rules('required');
@@ -547,7 +563,7 @@ class GlacomFunctions
                     }
                     break;
                 case 'boolean':
-                    $tmpField = Boolean::make($cfItem->name)
+                    $tmpField = Boolean::make($labelTmp, $cfItem->name)
                                     ->size($sizeTmp)
                                     ->hideFromIndex();
                     if($cfItem->is_required == true) $tmpField->rules('required');
@@ -560,25 +576,20 @@ class GlacomFunctions
                             $tmpField = Image::make($cfItem->name.__('lang_'.$langIt), $tmpName)
                                             ->size($sizeTmp)
                                             ->hideFromIndex();
-                            /*$tmpField->squared()->maxWidth(100)->path('uploads')->storeAs(function (Request $request) {
-                                $trace = debug_backtrace();
-                                $caller = $trace[2]['object'];
-                                $name = $caller->name;
-                                Log::debug($trace);
-                                trigger_error($name);
-                                return $request->{$name}->getClientOriginalName();
-                            });*/
+                            $tmpField->path('uploads')->storeAs(function (Request $request) use ($tmpName) {
+                                return $request->$tmpName->getClientOriginalName();
+                            });
                             if($cfItem->is_required == true) $tmpField->rules('required');
                             $listCustomField[] = $tmpField;
                         }
                     }else{
                         $tmpName = $cfItem->name;
-                        $tmpField = Image::make($tmpName)
+                        $tmpField = Image::make($labelTmp, $tmpName)
                                         ->size($sizeTmp)
                                         ->hideFromIndex();
-                        //$tmpField->path('uploads')->storeAs(function (Request $request, $tmpName) {
-                        //    return $request->$tmpName->getClientOriginalName();
-                        //});
+                        $tmpField->path('uploads')->storeAs(function (Request $request) use ($tmpName) {
+                            return $request->$tmpName->getClientOriginalName();
+                        });
                         if($cfItem->is_required == true) $tmpField->rules('required');
                         $listCustomField[] = $tmpField;
                     }
@@ -590,23 +601,89 @@ class GlacomFunctions
                             $tmpField = File::make($cfItem->name.__('lang_'.$langIt), $tmpName)
                                             ->size($sizeTmp)
                                             ->hideFromIndex();
-                            //$tmpField->path('uploads')->storeAs(function (Request $request, $tmpName) {
-                            //   return $request->$tmpName->getClientOriginalName();
-                            //});
+                            $tmpField->path('uploads')->storeAs(function (Request $request) use ($tmpName) {
+                               return $request->$tmpName->getClientOriginalName();
+                            });
                             if($cfItem->is_required == true) $tmpField->rules('required');
                             $listCustomField[] = $tmpField;
                         }
                     }else{
                         $tmpName = $cfItem->name;
-                        $tmpField = File::make($tmpName)
+                        $tmpField = File::make($labelTmp, $tmpName)
                                         ->size($sizeTmp)
                                         ->hideFromIndex();
-                        //$tmpField->path('uploads')->storeAs(function (Request $request, $tmpName) {
-                        //    return $request->$tmpName->getClientOriginalName();
-                        //});
+                        $tmpField->path('uploads')->storeAs(function (Request $request) use ($tmpName) {
+                            return $request->$tmpName->getClientOriginalName();
+                        });
                         if($cfItem->is_required == true) $tmpField->rules('required');
                         $listCustomField[] = $tmpField;
                     }
+                    break;
+                case 'hidden':
+                    $tmpName = $cfItem->name;
+                    $tmpField = Hidden::make($labelTmp, $tmpName)
+                                    ->default($cfItem->value);
+                    $listCustomField[] = $tmpField;
+                    break;
+                case 'oneToMany':
+                    $tmpField = MultiSelect::make($labelTmp, $cfItem->name)
+                                    ->options(function() use ($cfItem){
+                                        // 'value' => 'CorePages', 
+                                        //'relation_filter' => ['where' => [['active', '=', '1']], 'order'=>[['name','asc']]]
+                                        $options = array();
+                                        $nameClassTmp = $cfItem->value;
+                                        $query = new $nameClassTmp;
+                                        $query->select();
+                                        foreach($cfItem->relation_filter['where'] as $whereCond){
+                                            $query->where($whereCond[0], $whereCond[1], $whereCond[2]);
+                                        }
+                                        foreach($cfItem->relation_filter['order'] as $order){
+                                            $query->orderBy($order[0], $order[1]);
+                                        }
+                                        $data = $query->get();
+
+                                        foreach($data as $dataItem){
+                                            $options[$dataItem->id] = $dataItem->name;
+                                        }
+                                        
+                                        return $options;
+                                    })
+                                    ->size($sizeTmp)
+                                    ->reorderable()
+                                    ->taggable()
+                                    ->nullable()
+                                    ->clearOnSelect()
+                                    ->hideFromIndex();
+                    if($cfItem->is_required == true) $tmpField->rules('required');
+                    $listCustomField[] = $tmpField;
+                    break;
+                case 'manyToOne':
+                    $tmpField = Select::make($labelTmp, $cfItem->name)
+                                    ->options(function() use ($cfItem){
+                                        // 'value' => 'CorePages', 
+                                        //'relation_filter' => ['where' => [['active', '=', '1']], 'order'=>[['name','asc']]]
+                                        $options = array();
+                                        $nameClassTmp = $cfItem->value;
+                                        $query = new $nameClassTmp;
+                                        $query->select();
+                                        foreach($cfItem->relation_filter['where'] as $whereCond){
+                                            $query->where($whereCond[0], $whereCond[1], $whereCond[2]);
+                                        }
+                                        foreach($cfItem->relation_filter['order'] as $order){
+                                            $query->orderBy($order[0], $order[1]);
+                                        }
+                                        $data = $query->get();
+
+                                        foreach($data as $dataItem){
+                                            $options[$dataItem->id] = $dataItem->name;
+                                        }
+                                        
+                                        return $options;
+                                    })
+                                    ->size($sizeTmp)
+                                    ->hideFromIndex();
+                    if($cfItem->is_required == true) $tmpField->rules('required');
+                    $listCustomField[] = $tmpField;
                     break;
             }            
         }
