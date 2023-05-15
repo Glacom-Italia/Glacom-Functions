@@ -187,7 +187,7 @@ class GlacomFunctions
             ->orderBy('updated_at', 'desc')
             ->first();
 
-        if(!is_null($url)){
+        /*if(!is_null($url)){
             if($url->is_301 = true){
                 // trova ultimo record NON is_301
                 $url = CoreUrl::where('url', $url)
@@ -195,7 +195,11 @@ class GlacomFunctions
                     ->orderBy('updated_at', 'desc')
                     ->first();
             }
-        }
+        }*/
+
+        if(!is_null($url)) return $url;
+
+        return false;
     }
 
     /**
