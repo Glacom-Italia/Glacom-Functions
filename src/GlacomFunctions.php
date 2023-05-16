@@ -208,7 +208,7 @@ class GlacomFunctions
      * @param string $locale
      * @param string $table
      * @param integer $table_id
-     * @return string
+     * @return App\Models\Core\CoreUrl
     */
     public function getUrlByInfo($locale, $table, $table_id){
 
