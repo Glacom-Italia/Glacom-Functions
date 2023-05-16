@@ -656,6 +656,7 @@ class GlacomFunctions
                                     ->reorderable()
                                     ->taggable()
                                     ->nullable()
+                                    ->saveAsJSON()
                                     ->clearOnSelect()
                                     ->hideFromIndex();
                     if($cfItem->is_required == true) $tmpField->rules('required');
