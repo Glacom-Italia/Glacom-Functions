@@ -14,8 +14,10 @@ use Laravel\Nova\Fields\Hidden;
 use Laravel\Nova\Fields\Select;
 //use Laravel\Nova\Fields\MultiSelect;
 use Outl1ne\MultiselectField\Multiselect;
+use Mostafaznv\NovaCkEditor\CkEditor;
 use App\Models\Core\CoreUrl;
 use App\Models\Core\CoreUrlTemplate;
+use App\Models\Core\CoreTranslation;
 //use per gestire oneToMany e manyToOne come custom fields per component
 use App\Models\Core\CorePage;
 use App\Models\Core\CoreBanner;
@@ -24,6 +26,8 @@ use App\Models\Magazine\MagazineAuthor;
 use App\Models\Magazine\MagazineGroup;
 use App\Models\Magazine\MagazineNews;
 use App\Models\Magazine\MagazineTag;
+use App\Models\Gallery\GalleryCategory;
+use App\Models\Gallery\GalleryItem;
 
 use Illuminate\Support\Facades\Log;
 
@@ -91,6 +95,28 @@ class GlacomFunctions
                             
                             break;
                         case 'magazine-tags':
+                            break;
+                        case 'gallery-categories':
+                            if(strpos($urlTmp, '{galleryCategoryLev1}')){
+
+                            }
+                            if(strpos($urlTmp, '{galleryCategoryLev2}')){
+
+                            }
+                            if(strpos($urlTmp, '{galleryCategoryLev3}')){
+
+                            }    
+                            break;
+                        case 'gallery-items':
+                            if(strpos($urlTmp, '{galleryCategoryLev1}')){
+
+                            }
+                            if(strpos($urlTmp, '{galleryCategoryLev2}')){
+
+                            }
+                            if(strpos($urlTmp, '{galleryCategoryLev3}')){
+
+                            }
                             break;
                     }
                     
@@ -208,7 +234,7 @@ class GlacomFunctions
      * @param string $locale
      * @param string $table
      * @param integer $table_id
-     * @return string
+     * @return App\Models\Core\CoreUrl
     */
     public function getUrlByInfo($locale, $table, $table_id){
 
@@ -372,6 +398,10 @@ class GlacomFunctions
             case 'magazine-tags':
                 $module = 'magazine';
                 break;
+            case 'gallery-categories':
+            case 'gallery-items':
+                $module = 'gallery';
+                break;    
 
         }
 
@@ -481,6 +511,7 @@ class GlacomFunctions
 
         $listCustomField = array();
         $langAv = config('app.lang');
+        $langDef = config('app.locale');
             
         foreach($cf as $cfItem){
 
@@ -535,6 +566,24 @@ class GlacomFunctions
                         $listCustomField[] = $tmpField;
                     }    
                     break;
+                case 'editor':
+                        if($cfItem->is_multilanguage == true){
+                            foreach($langAv as $langIt){
+                                $tmpName = $cfItem->name.'_'.$langIt;
+                                $tmpField = CkEditor::make($cfItem->name.' '.__('lang_'.$langIt), $tmpName)
+                                                ->stacked()
+                                                ->hideFromIndex();
+                                if($cfItem->is_required == true) $tmpField->rules('required');
+                                $listCustomField[] = $tmpField;
+                            }
+                        }else{
+                            $tmpField = CkEditor::make($labelTmp, $cfItem->name)
+                                            ->stacked()
+                                            ->hideFromIndex();
+                            if($cfItem->is_required == true) $tmpField->rules('required');
+                            $listCustomField[] = $tmpField;
+                        }    
+                        break;    
                 case 'number':
                     if($cfItem->is_multilanguage == true){
                         foreach($langAv as $langIt){
@@ -623,6 +672,64 @@ class GlacomFunctions
                         $listCustomField[] = $tmpField;
                     }
                     break;
+                case 'select':
+                    $tmpField = Select::make($labelTmp, $cfItem->name)
+                                    ->options(function() use ($cfItem, $langDef){
+                                        $options=array();
+
+                                        $fieldConf = json_decode($cfItem->configuration);
+                                        if($fieldConf && $fieldConf->option && $fieldConf->value){
+                                            $options=array();
+                                            $optTmp = explode(',', $fieldConf->option);
+                                            $valTmp = explode(',', $fieldConf->value);
+                                            foreach($valTmp as $ind=>$val){
+                                                $labTmp = CoreTranslation::where('tag', trim($optTmp[$ind]))->first();
+                                                $lab=$labTmp->value;
+                                                $options[trim($val)] = $lab[$langDef];
+                                            }
+                                        }elseif($cfItem->value && is_array($cfItem->value)){
+                                            $options = $cfItem->value;
+                                        }
+                                                        
+                                        return $options;
+                                    })
+                                    ->displayUsingLabels()
+                                    ->size($sizeTmp)
+                                    ->hideFromIndex();
+                    if($cfItem->is_required == true) $tmpField->rules('required');                    
+                    $listCustomField[] = $tmpField;
+                    break;
+                case 'multiselect':
+                    $tmpField = MultiSelect::make($labelTmp, $cfItem->name)
+                                    ->options(function() use ($cfItem, $langDef){
+                                        $options=array();
+
+                                        $fieldConf = json_decode($cfItem->configuration);
+                                        if($fieldConf && $fieldConf->option && $fieldConf->value){
+                                            $options=array();
+                                            $optTmp = explode(',', $fieldConf->option);
+                                            $valTmp = explode(',', $fieldConf->value);
+                                            foreach($valTmp as $ind=>$val){
+                                                $labTmp = CoreTranslation::where('tag', trim($optTmp[$ind]))->first();
+                                                $lab=$labTmp->value;
+                                                $options[trim($val)] = $lab[$langDef];
+                                            }
+                                        }elseif($cfItem->value && is_array($cfItem->value)){
+                                            $options = $cfItem->value;
+                                        }
+                                        
+                                        return $options;
+                                    })
+                                    ->size($sizeTmp)
+                                    ->reorderable()
+                                    ->taggable()
+                                    ->nullable()
+                                    ->saveAsJSON(true)
+                                    ->clearOnSelect()
+                                    ->hideFromIndex();
+                    if($cfItem->is_required == true) $tmpField->rules('required');
+                    $listCustomField[] = $tmpField;
+                    break;
                 case 'hidden':
                     $tmpName = $cfItem->name;
                     $tmpField = Hidden::make($labelTmp, $tmpName)
@@ -656,7 +763,7 @@ class GlacomFunctions
                                     ->reorderable()
                                     ->taggable()
                                     ->nullable()
-                                    ->saveAsJSON()
+                                    ->saveAsJSON(true)
                                     ->clearOnSelect()
                                     ->hideFromIndex();
                     if($cfItem->is_required == true) $tmpField->rules('required');
