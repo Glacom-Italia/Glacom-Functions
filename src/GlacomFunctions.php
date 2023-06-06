@@ -47,6 +47,11 @@ class GlacomFunctions
         if(!$modelData || is_null($modelData)) $data = $model::find($modelID);
         else $data = $modelData;
 
+        //forzatura per creazione url homepage ($table = 'core-pages' e $data->is_homepage = true
+        if($table == 'core-pages' && $data->is_homepage == true){
+            return '/'.$lang;
+        }
+        
         if(isset($table)){
             $tpl = CoreUrlTemplate::where('table', $table)->first();
             
