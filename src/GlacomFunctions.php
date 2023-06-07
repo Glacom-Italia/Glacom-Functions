@@ -28,6 +28,8 @@ use App\Models\Magazine\MagazineNews;
 use App\Models\Magazine\MagazineTag;
 use App\Models\Gallery\GalleryCategory;
 use App\Models\Gallery\GalleryItem;
+use App\Models\Event\EventCategory;
+use App\Models\Event\EventItem;
 
 use Illuminate\Support\Facades\Log;
 
@@ -44,7 +46,7 @@ class GlacomFunctions
     public function calculateURL($lang, $table, $model, $modelID, $modelData, $resourceName, $resourceNameAlt=null, $useModrewrite=true){
 
         $newURL = '';
-        if(!$modelData || is_null($modelData)) $data = $model::find($modelID);
+        if(!$modelData || is_null($modelData)) $data = $model::where('id',$modelID);
         else $data = $modelData;
 
         //forzatura per creazione url homepage ($table = 'core-pages' e $data->is_homepage = true
@@ -94,9 +96,12 @@ class GlacomFunctions
                         case 'magazine-news':
                             if(strpos($urlTmp, '{magazineNewsPublishDate}')){
                                 $dtTmp = explode(' ', $data->publish_datetime);
-                                $dtTmp2 = explode('-', $dtTmp[0]);
-                                $urlTmp = str_replace('{magazineNewsPublishDate}', $dtTmp2[2].'-'.$dtTmp2[1].'-'.$dtTmp2[0], $urlTmp);
-                            }    
+                                $urlTmp = str_replace('{magazineNewsPublishDate}', str_replace('-','/',$dtTmp[0]), $urlTmp);
+                            }
+                            if(strpos($urlTmp, '{magazineNewsGroup}')){
+                                $dataNews = $model::where('id',$modelID)->with('magazineGroup')->get()->first();
+                                $urlTmp = str_replace('{magazineNewsGroup}', $dataNews->magazineGroup[0]->title[$lang], $urlTmp);
+                            }
                             
                             break;
                         case 'magazine-tags':
@@ -123,6 +128,15 @@ class GlacomFunctions
 
                             }
                             break;
+                        case 'event-categories':
+                            break;
+                        case 'event-items':
+                            if(strpos($urlTmp, '{eventItemDatetime}')){
+                                $dtTmp = explode(' ', $data->datetime_from);
+                                $urlTmp = str_replace('{eventItemDatetime}', str_replace('-','/',$dtTmp[0]), $urlTmp);
+                            }
+                            break;
+
                     }
                     
                     if(substr($urlTmp, 0, 1) == '/') $newURL = '/'.$lang.$urlTmp;
@@ -487,17 +501,13 @@ class GlacomFunctions
         $outData='';
         if($typeView=='table'){
             $outData.='<table style="width:100%;border:1px solid">';
-            foreach($data as $dataItem){
-                $outData.='<tr>';
-                $outData.='<td>';
-                $outData.=strtoupper($dataItem['lang']);
-                $outData.='</td>';
-                $outData.='<td>';
-                $outData.=$dataItem['url'];
-                $outData.='</td>';
-                $outData.='<td>';
-                $outData.='<a href="'.$dataItem['lang'].'" target="_blank">APRI</a>';
-                $outData.='</td>';
+            foreach($data as $dataRow){
+                $outData.='<tr style="border:1px solid">';
+                foreach($dataRow as $dataRowItem){
+                    $outData.='<td>';
+                    $outData.=$dataRowItem;
+                    $outData.='</td>';
+                }
                 $outData.='</tr>';
             }
             $outData.='</table>';
