@@ -1,6 +1,6 @@
 {
     "name": "glacom/functions",
-    "version": "1.14",
+    "version": "1.15",
     "description": "Glacom functions for Laravel",
     "type": "library",
     "license": "MIT",

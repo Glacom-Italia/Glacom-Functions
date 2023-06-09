@@ -83,8 +83,12 @@ class GlacomFunctions
                     if(strpos($urlTmp, '{resourceName}'))
                         $urlTmp = str_replace('{resourceName}', $data->name, $urlTmp);
                     
-                    if(strpos($urlTmp, '{resourceTitle}'))
-                        $urlTmp = str_replace('{resourceTitle}', $data->title[$lang], $urlTmp);
+                    if(strpos($urlTmp, '{resourceTitle}')){
+                        if(!is_null($data->title[$lang]) && trim($data->title[$lang]) != '')
+                            $urlTmp = str_replace('{resourceTitle}', $data->title[$lang], $urlTmp);
+                        else
+                            $urlTmp = str_replace('{resourceTitle}', '', $urlTmp);
+                    }    
 
                     switch($table){
                         case 'core_pages':
@@ -101,12 +105,19 @@ class GlacomFunctions
                             break;
                         case 'magazine_news':
                             if(strpos($urlTmp, '{magazineNewsPublishDate}')){
-                                $dtTmp = explode(' ', $data->publish_datetime);
-                                $urlTmp = str_replace('{magazineNewsPublishDate}', str_replace('-','/',$dtTmp[0]), $urlTmp);
+                                if(!is_null($data->publish_datetime)){
+                                    $dtTmp = explode(' ', $data->publish_datetime);
+                                    $urlTmp = str_replace('{magazineNewsPublishDate}', str_replace('-','/',$dtTmp[0]), $urlTmp);
+                                }else{
+                                    $urlTmp = str_replace('{magazineNewsPublishDate}', '', $urlTmp);
+                                }    
                             }
                             if(strpos($urlTmp, '{magazineNewsGroup}')){
                                 $dataNews = $model::where('id',$modelID)->with('magazineGroup')->get()->first();
-                                $urlTmp = str_replace('{magazineNewsGroup}', $dataNews->magazineGroup[0]->title[$lang], $urlTmp);
+                                if(!is_null($dataNews->magazineGroup) && count($dataNews->magazineGroup) > 0)
+                                    $urlTmp = str_replace('{magazineNewsGroup}', $dataNews->magazineGroup[0]->title[$lang], $urlTmp);
+                                else
+                                    $urlTmp = str_replace('{magazineNewsGroup}', '', $urlTmp);    
                             }
                             
                             break;
@@ -138,8 +149,12 @@ class GlacomFunctions
                             break;
                         case 'event_items':
                             if(strpos($urlTmp, '{eventItemDatetime}')){
-                                $dtTmp = explode(' ', $data->datetime_from);
-                                $urlTmp = str_replace('{eventItemDatetime}', str_replace('-','/',$dtTmp[0]), $urlTmp);
+                                if(!is_null($data->publish_datetime)){
+                                    $dtTmp = explode(' ', $data->datetime_from);
+                                    $urlTmp = str_replace('{eventItemDatetime}', str_replace('-','/',$dtTmp[0]), $urlTmp);
+                                }else{
+                                    $urlTmp = str_replace('{eventItemDatetime}', '', $urlTmp);
+                                }    
                             }
                             break;
 
