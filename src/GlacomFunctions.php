@@ -39,8 +39,14 @@ class GlacomFunctions
     /**
      * Calculate new url check template/modrewrite(opt)/resource name.
      *
-     * @param  string $url
-     * @param  bool $lowercase
+     * @param  string $lang
+     * @param  string $table
+     * @param  string $model
+     * @param  int $modelID
+     * @param  object $modelData
+     * @param  string $resourceName
+     * @param  string $resourceNameAlt
+     * @param  bool $useModrewrite
      * @return App\Models\Core\CoreUrl
     */
     public function calculateURL($lang, $table, $model, $modelID, $modelData, $resourceName, $resourceNameAlt=null, $useModrewrite=true){
@@ -49,8 +55,8 @@ class GlacomFunctions
         if(!$modelData || is_null($modelData)) $data = $model::where('id',$modelID);
         else $data = $modelData;
 
-        //forzatura per creazione url homepage ($table = 'core-pages' e $data->is_homepage = true
-        if($table == 'core-pages' && $data->is_homepage == true){
+        //forzatura per creazione url homepage ($table = 'core_pages' e $data->is_homepage = true
+        if($table == 'core_pages' && $data->is_homepage == true){
             return '/'.$lang;
         }
         
@@ -81,9 +87,9 @@ class GlacomFunctions
                         $urlTmp = str_replace('{resourceTitle}', $data->title[$lang], $urlTmp);
 
                     switch($table){
-                        case 'core-pages':
+                        case 'core_pages':
                             break;
-                        case 'magazine-authors':
+                        case 'magazine_authors':
                             if(strpos($urlTmp, '{magazineAuthorName}'))
                                 $urlTmp = str_replace('{magazineAuthorName}', $data->name, $urlTmp);
 
@@ -91,9 +97,9 @@ class GlacomFunctions
                                 $urlTmp = str_replace('{magazineAuthorSurname}', $data->surname, $urlTmp);                            
                             
                             break;
-                        case 'magazine-groups':
+                        case 'magazine_groups':
                             break;
-                        case 'magazine-news':
+                        case 'magazine_news':
                             if(strpos($urlTmp, '{magazineNewsPublishDate}')){
                                 $dtTmp = explode(' ', $data->publish_datetime);
                                 $urlTmp = str_replace('{magazineNewsPublishDate}', str_replace('-','/',$dtTmp[0]), $urlTmp);
@@ -104,9 +110,9 @@ class GlacomFunctions
                             }
                             
                             break;
-                        case 'magazine-tags':
+                        case 'magazine_tags':
                             break;
-                        case 'gallery-categories':
+                        case 'gallery_categories':
                             if(strpos($urlTmp, '{galleryCategoryLev1}')){
 
                             }
@@ -117,7 +123,7 @@ class GlacomFunctions
 
                             }    
                             break;
-                        case 'gallery-items':
+                        case 'gallery_items':
                             if(strpos($urlTmp, '{galleryCategoryLev1}')){
 
                             }
@@ -128,9 +134,9 @@ class GlacomFunctions
 
                             }
                             break;
-                        case 'event-categories':
+                        case 'event_categories':
                             break;
-                        case 'event-items':
+                        case 'event_items':
                             if(strpos($urlTmp, '{eventItemDatetime}')){
                                 $dtTmp = explode(' ', $data->datetime_from);
                                 $urlTmp = str_replace('{eventItemDatetime}', str_replace('-','/',$dtTmp[0]), $urlTmp);
@@ -166,6 +172,7 @@ class GlacomFunctions
      *
      * @param  string $url
      * @param  bool $lowercase
+     * @param  bool $nospecialletter
      * @return string
     */
     public function cleanURL($string, $lowercase=true, $nospecialletter=true){
@@ -317,7 +324,7 @@ class GlacomFunctions
         //Log::debug('insertNewUrl > '.$url.'|'.$is301.'|'.$is404.'|'.$urlRedirect);
         $coreUrl = CoreUrl::create([
             'locale' => $locale,
-            'core_page_id' => ($table=='core-pages') ? $table_id : $this->getPageIDbyTable($table),
+            'core_page_id' => ($table=='core_pages') ? $table_id : $this->getPageIDbyTable($table),
             'table' => $table,
             'table_id' => $table_id,
             'url' => $url,
@@ -369,7 +376,11 @@ class GlacomFunctions
         
         $currentURL = $this->getUrlByInfo($locale, $table, $table_id);
         
-        if($url != $currentURL->url){
+        if(!$currentURL){
+            // if not exists, insert 
+            $this->insertNewUrl($locale, $table, $table_id, $url, $is301, $is404, $urlRedirect);
+
+        }elseif($url != $currentURL->url){
             $start = new \DateTime($currentURL->updated_at);
             $end = new \DateTime();
 
@@ -393,12 +404,12 @@ class GlacomFunctions
                 $this->updateCurrentUrl($locale, $table, $table_id, $url, $is301, $is404, $urlRedirect);
             }
 
-            return true;
-
         }else{
             return false;
 
         }
+
+        return true;
     }
 
     /**
@@ -411,16 +422,20 @@ class GlacomFunctions
         $module = '';
 
         switch($table){
-            case 'magazine-authors':
-            case 'magazine-groups':
-            case 'magazine-news':
-            case 'magazine-tags':
+            case 'magazine_authors':
+            case 'magazine_groups':
+            case 'magazine_news':
+            case 'magazine_tags':
                 $module = 'magazine';
                 break;
-            case 'gallery-categories':
-            case 'gallery-items':
+            case 'gallery_categories':
+            case 'gallery_items':
                 $module = 'gallery';
-                break;    
+                break;
+            case 'event_categories':
+            case 'event_items':
+                $module = 'event';
+                break;        
 
         }
 
@@ -433,23 +448,6 @@ class GlacomFunctions
         }
         
         return null;
-    }
-
-    /**
-     * Create blade view if not already exists in giving directory.
-     *
-     * @param string $filename
-     * @param string $dir
-     * @return array
-    */
-    public function createViewsIfNotExists($filename, $dir = null){
-        $filenameWithDir = $filename;
-        if(!is_null($dir)) $filenameWithDir = $dir .'/'. $filename;
-        
-        if(!view()->exists($filenameWithDir)){
-            fopen(base_path('resources/views/'.$filenameWithDir), 'w');
-        }
-        return;
     }
 
     /**
