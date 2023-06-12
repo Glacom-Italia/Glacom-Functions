@@ -52,11 +52,11 @@ class GlacomFunctions
     public function calculateURL($lang, $table, $model, $modelID, $modelData, $resourceName, $resourceNameAlt=null, $useModrewrite=true){
 
         $newURL = '';
-        if(!$modelData || is_null($modelData)) $data = $model::where('id',$modelID);
+        if(!$modelData || is_null($modelData)) $data = $model::where('id',$modelID)->first();
         else $data = $modelData;
 
         //forzatura per creazione url homepage ($table = 'core_pages' e $data->is_homepage = true
-        if($table == 'core_pages' && $data->is_homepage == true){
+        if($table == 'core_pages' && $data?->is_homepage == true){
             return '/'.$lang;
         }
         
