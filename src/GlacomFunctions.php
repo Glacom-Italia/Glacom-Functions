@@ -507,13 +507,25 @@ class GlacomFunctions
      *
      * @param array $data
      * @param string $typeView
+     * @param array $dataHead
      * @return string
     */
-    public function displayData($data, $typeView){
+    public function displayData($data, $typeView, $dataHead=null){
         
         $outData='';
         if($typeView=='table'){
             $outData.='<table style="width:100%;border:1px solid">';
+
+            if(!is_null($dataHead) && is_array($dataHead)){
+                $outData.='<tr style="border:1px solid;font-weight:bold;">';
+                foreach($dataHead as $dataHeadItem){
+                    $outData.='<th>';
+                    $outData.=$dataHeadItem;
+                    $outData.='</th>';
+                }
+                $outData.='</tr>';
+            }
+
             foreach($data as $dataRow){
                 $outData.='<tr style="border:1px solid">';
                 foreach($dataRow as $dataRowItem){
@@ -523,6 +535,7 @@ class GlacomFunctions
                 }
                 $outData.='</tr>';
             }
+
             $outData.='</table>';
         }
 
