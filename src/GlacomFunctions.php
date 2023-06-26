@@ -542,6 +542,82 @@ class GlacomFunctions
         return $outData;
     }
 
+        /**
+     * Find specific resource ID in all resources components
+     *
+     * @param array $data
+     * @param string $typeView
+     * @param array $dataHead
+     * @return string
+    */
+    public function findIDinAllResourcesComponents($model, $modelId, $componentLayout){
+        
+        $outData=array();
+        
+        $rows = CoreBanner::all();
+        $outData = array_merge($outData, $this->findIDinOneResourceComponents($rows, $model, $modelId, $componentLayout, 'CoreBanner'));
+        
+        $rows = CorePage::all();
+        $outData = array_merge($outData, $this->findIDinOneResourceComponents($rows, $model, $modelId, $componentLayout, 'CorePage'));
+
+        if(in_array('event', array_keys(config('app.active_modules')))){
+            $rows = EventItem::all();
+            $outData = array_merge($outData, $this->findIDinOneResourceComponents($rows, $model, $modelId, $componentLayout, 'EventItem'));
+
+            $rows = EventCategory::all();
+            $outData = array_merge($outData, $this->findIDinOneResourceComponents($rows, $model, $modelId, $componentLayout, 'EventCategory'));
+        }
+
+        if(in_array('gallery', array_keys(config('app.active_modules')))){
+            $rows = GalleryItem::all();
+            $outData = array_merge($outData, $this->findIDinOneResourceComponents($rows, $model, $modelId, $componentLayout, 'GalleryItem'));  
+
+            $rows = GalleryCategory::all();
+            $outData = array_merge($outData, $this->findIDinOneResourceComponents($rows, $model, $modelId, $componentLayout, 'GalleryCategory'));
+        }
+
+        if(in_array('magazine', array_keys(config('app.active_modules')))){
+            $rows = MagazineAuthor::all();
+            $outData = array_merge($outData, $this->findIDinOneResourceComponents($rows, $model, $modelId, $componentLayout, 'MagazineAuthor'));  
+
+            $rows = MagazineGroup::all();
+            $outData = array_merge($outData, $this->findIDinOneResourceComponents($rows, $model, $modelId, $componentLayout, 'MagazineGroup'));
+
+            $rows = MagazineNews::all();
+            $outData = array_merge($outData, $this->findIDinOneResourceComponents($rows, $model, $modelId, $componentLayout, 'MagazineNews'));
+
+            $rows = MagazineTag::all();
+            $outData = array_merge($outData, $this->findIDinOneResourceComponents($rows, $model, $modelId, $componentLayout, 'MagazineTag'));
+        }       
+
+        return $outData;
+    }
+
+    public function findIDinOneResourceComponents($rows, $model, $modelId, $componentLayout, $currentModel){
+        $outData = array();
+
+        foreach($rows as $rowItem){
+            $components = $rowItem->components;
+            if($components != '' || !is_null($components)){
+                foreach(json_decode($components) as $itemComp){
+                    if(($model == 'CoreBanner' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->banner)) ||
+                    ($model == 'CoreForm' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->form)) ||
+                    ($model == 'MagazineNews' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->news)) ||
+                    ($model == 'MagazineTag' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->tags)) ||
+                    ($model == 'MagazineGroup' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->groups)) ||
+                    ($model == 'GalleryItem' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->items)) ||
+                    ($model == 'GalleryCategory' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->categories)) ||
+                    ($model == 'EventItem' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->items)) ||
+                    ($model == 'EventCategory' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->categories))
+                    )
+                        $outData[]=[__($currentModel), 'ID: '.$rowItem->id, $rowItem->name];
+                }
+            }    
+        }
+
+        return $outData;
+    }
+
     /**
      * Get the Nova Custom Fields List giving data from model CoreCustomField.
      *
