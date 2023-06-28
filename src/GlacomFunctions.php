@@ -600,15 +600,15 @@ class GlacomFunctions
             $components = $rowItem->components;
             if($components != '' || !is_null($components)){
                 foreach(json_decode($components) as $itemComp){
-                    if(($model == 'CoreBanner' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->banner)) ||
-                    ($model == 'CoreForm' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->form)) ||
-                    ($model == 'MagazineNews' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->news)) ||
-                    ($model == 'MagazineTag' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->tags)) ||
-                    ($model == 'MagazineGroup' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->groups)) ||
-                    ($model == 'GalleryItem' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->items)) ||
-                    ($model == 'GalleryCategory' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->categories)) ||
-                    ($model == 'EventItem' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->items)) ||
-                    ($model == 'EventCategory' && $itemComp->layout == $componentLayout && in_array($modelId, $itemComp->attributes->categories))
+                    if(($model == 'CoreBanner' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->banner) && in_array($modelId, $itemComp->attributes->banner)) ||
+                    ($model == 'CoreForm' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->form) && in_array($modelId, $itemComp->attributes->form)) ||
+                    ($model == 'MagazineNews' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->news) && in_array($modelId, $itemComp->attributes->news)) ||
+                    ($model == 'MagazineTag' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->tags) && in_array($modelId, $itemComp->attributes->tags)) ||
+                    ($model == 'MagazineGroup' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->groups) && in_array($modelId, $itemComp->attributes->groups)) ||
+                    ($model == 'GalleryItem' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->items) && in_array($modelId, $itemComp->attributes->items)) ||
+                    ($model == 'GalleryCategory' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->categories) && in_array($modelId, $itemComp->attributes->categories)) ||
+                    ($model == 'EventItem' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->items) && in_array($modelId, $itemComp->attributes->items)) ||
+                    ($model == 'EventCategory' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->categories) && in_array($modelId, $itemComp->attributes->categories))
                     )
                         $outData[]=[__($currentModel), 'ID: '.$rowItem->id, $rowItem->name];
                 }
