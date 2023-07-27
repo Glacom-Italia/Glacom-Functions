@@ -367,12 +367,14 @@ class GlacomFunctions
     
         $currentURL = $this->getUrlByInfo($locale, $table, $table_id);
 
-        if(isset($url) && !is_null($url)) $currentURL->url = $url;
-        if(isset($is301) && !is_null($is301)) $currentURL->is_301 = $is301;
-        if(isset($is404) && !is_null($is404)) $currentURL->is_404 = $is404;
-        if(isset($urlRedirect) && !is_null($urlRedirect)) $currentURL->url_redirect = $urlRedirect;
-        //Log::debug('updateCurrentUrl > '.$url.'|'.$is301.'|'.$is404.'|'.$urlRedirect);
-        $currentURL->save();
+        if($currentURL){
+            if(isset($url) && !is_null($url)) $currentURL->url = $url;
+            if(isset($is301) && !is_null($is301)) $currentURL->is_301 = $is301;
+            if(isset($is404) && !is_null($is404)) $currentURL->is_404 = $is404;
+            if(isset($urlRedirect) && !is_null($urlRedirect)) $currentURL->url_redirect = $urlRedirect;
+            //Log::debug('updateCurrentUrl > '.$url.'|'.$is301.'|'.$is404.'|'.$urlRedirect);
+            $currentURL->save();
+        }
 
         return true;
     }
@@ -456,10 +458,9 @@ class GlacomFunctions
 
         if($module != ''){
             $page = CorePage::where('is_active', '1')
-                ->where('modules', 'LIKE', '"'.$module.'"')
+                ->where('modules', 'LIKE', '%"'.$module.'"%')
                 ->first();
-            if(!is_null($page))
-                return $page->id;
+            if(!is_null($page)) return $page->id;
         }
         
         return null;
