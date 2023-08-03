@@ -18,6 +18,7 @@ use Mostafaznv\NovaCkEditor\CkEditor;
 use App\Models\Core\CoreUrl;
 use App\Models\Core\CoreUrlTemplate;
 use App\Models\Core\CoreTranslation;
+use App\Http\Controllers\Gallery\GalleryController;
 //use per gestire oneToMany e manyToOne come custom fields per component
 use App\Models\Core\CorePage;
 use App\Models\Core\CoreBanner;
@@ -124,26 +125,60 @@ class GlacomFunctions
                         case 'magazine_tags':
                             break;
                         case 'gallery_categories':
-                            if(strpos($urlTmp, '{galleryCategoryLev1}')){
-
+                            $galleryControllers = new GalleryController();
+                            $galleryCategories = $galleryControllers->generateParentTreeByGalleryCategoryID($modelID);
+                            
+                            if(strpos($urlTmp, '{galleryCategoryLev1}')){                               
+                                if(count($galleryCategories) > 0 && array_key_exists('0', $galleryCategories))
+                                    $urlTmp = str_replace('{galleryCategoryLev1}', $galleryCategories[0]->title[$lang].'/', $urlTmp);
+                                else
+                                    $urlTmp = str_replace('{galleryCategoryLev1}', '', $urlTmp);
                             }
                             if(strpos($urlTmp, '{galleryCategoryLev2}')){
-
+                                if(count($galleryCategories) > 0 && array_key_exists('1', $galleryCategories))
+                                    $urlTmp = str_replace('{galleryCategoryLev2}', $galleryCategories[1]->title[$lang].'/', $urlTmp);
+                                else
+                                    $urlTmp = str_replace('{galleryCategoryLev2}', '', $urlTmp);
                             }
                             if(strpos($urlTmp, '{galleryCategoryLev3}')){
+                                if(count($galleryCategories) > 0 && array_key_exists('2', $galleryCategories))
+                                    $urlTmp = str_replace('{galleryCategoryLev3}', $galleryCategories[2]->title[$lang].'/', $urlTmp);
+                                else
+                                    $urlTmp = str_replace('{galleryCategoryLev3}', '', $urlTmp);
+                            }
 
-                            }    
+                            // togliere / dalla fine della stringa $urlTmp
+                            $urlTmp = str_replace('//', '/', $urlTmp);
+                            $urlTmp = rtrim($urlTmp, '/');
+
                             break;
                         case 'gallery_items':
-                            if(strpos($urlTmp, '{galleryCategoryLev1}')){
+                            $dataItem = $model::where('id',$modelID)->with('GalleryCategory')->get()->first();
+                            $galleryControllers = new GalleryController();
+                            $galleryCategories = $galleryControllers->generateParentTreeByGalleryCategoryID($dataItem->GalleryCategory[0]->id);
 
+                            if(strpos($urlTmp, '{galleryCategoryLev1}')){                               
+                                if(count($galleryCategories) > 0 && array_key_exists('0', $galleryCategories))
+                                    $urlTmp = str_replace('{galleryCategoryLev1}', $galleryCategories[0]->title[$lang].'/', $urlTmp);
+                                else
+                                    $urlTmp = str_replace('{galleryCategoryLev1}', '', $urlTmp);
                             }
                             if(strpos($urlTmp, '{galleryCategoryLev2}')){
-
+                                if(count($galleryCategories) > 0 && array_key_exists('1', $galleryCategories))
+                                    $urlTmp = str_replace('{galleryCategoryLev2}', $galleryCategories[1]->title[$lang].'/', $urlTmp);
+                                else
+                                    $urlTmp = str_replace('{galleryCategoryLev2}', '', $urlTmp);
                             }
                             if(strpos($urlTmp, '{galleryCategoryLev3}')){
-
+                                if(count($galleryCategories) > 0 && array_key_exists('2', $galleryCategories))
+                                    $urlTmp = str_replace('{galleryCategoryLev3}', $galleryCategories[2]->title[$lang].'/', $urlTmp);
+                                else
+                                    $urlTmp = str_replace('{galleryCategoryLev3}', '', $urlTmp);
                             }
+
+                            // sostituisce // con / in $urlTmp
+                            $urlTmp = str_replace('//', '/', $urlTmp);
+
                             break;
                         case 'event_categories':
                             break;
