@@ -470,28 +470,29 @@ class GlacomFunctions
      * @param  module's tabke $table
      * @return array
     */
-    public function getPageIDbyTable($table){
-        $module = '';
+    public function getPageIDbyTable($table, $module=null){
 
-        switch($table){
-            case 'magazine_authors':
-            case 'magazine_groups':
-            case 'magazine_news':
-            case 'magazine_tags':
-                $module = 'magazine';
-                break;
-            case 'gallery_categories':
-            case 'gallery_items':
-                $module = 'gallery';
-                break;
-            case 'event_categories':
-            case 'event_items':
-                $module = 'event';
-                break;        
+        if(is_null($module) && $table != ''){
+            switch($table){
+                case 'magazine_authors':
+                case 'magazine_groups':
+                case 'magazine_news':
+                case 'magazine_tags':
+                    $module = 'magazine';
+                    break;
+                case 'gallery_categories':
+                case 'gallery_items':
+                    $module = 'gallery';
+                    break;
+                case 'event_categories':
+                case 'event_items':
+                    $module = 'event';
+                    break;        
 
+            }
         }
 
-        if($module != ''){
+        if(!is_null($module)){
             $page = CorePage::where('is_active', '1')
                 ->where('modules', 'LIKE', '%"'.$module.'"%')
                 ->first();
