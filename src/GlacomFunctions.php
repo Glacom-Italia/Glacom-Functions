@@ -644,7 +644,7 @@ class GlacomFunctions
                     ($model == 'MagazineGroup' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->groups) && in_array($modelId, $itemComp->attributes->groups)) ||
                     ($model == 'GalleryItem' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->items) && in_array($modelId, $itemComp->attributes->items)) ||
                     ($model == 'GalleryCategory' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->categories) && in_array($modelId, $itemComp->attributes->categories)) ||
-                    ($model == 'EventItem' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->items) && in_array($modelId, $itemComp->attributes->items)) ||
+                    ($model == 'EventItem' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->events) && in_array($modelId, $itemComp->attributes->events)) ||
                     ($model == 'EventCategory' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->categories) && in_array($modelId, $itemComp->attributes->categories))
                     )
                         $outData[]=[__($currentModel), 'ID: '.$rowItem->id, $rowItem->name];
