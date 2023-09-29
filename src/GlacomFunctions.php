@@ -488,7 +488,10 @@ class GlacomFunctions
                 case 'event_items':
                     $module = 'event';
                     break;        
-
+                case 'cantiberetti_categories':
+                case 'cantiberetti_products':
+                    $module = 'cantiberetti';
+                    break; 
             }
         }
 
