@@ -48,7 +48,7 @@ class GlacomFunctions
      * @param  string $resourceName
      * @param  string $resourceNameAlt
      * @param  bool $useModrewrite
-     * @return App\Models\Core\CoreUrl
+     * @return string
     */
     public function calculateURL($lang, $table, $model, $modelID, $modelData, $resourceName, $resourceNameAlt=null, $useModrewrite=true){
 
@@ -201,7 +201,7 @@ class GlacomFunctions
             }
         }
 
-        if($useModrewrite == true && !is_null($data->modrewrite[$lang]) && trim($data->modrewrite[$lang]) != ''){ //$newURL == '' && 
+        if($useModrewrite == true && !is_null($data->modrewrite) && !is_null($data->modrewrite[$lang]) && trim($data->modrewrite[$lang]) != ''){ //$newURL == '' && 
             //se c'è modrewrite custom sovrascrivo template
             $newURL = '/'.$lang.'/'.$data->modrewrite[$lang];
         }
@@ -491,7 +491,12 @@ class GlacomFunctions
                 case 'cantiberetti_categories':
                 case 'cantiberetti_products':
                     $module = 'cantiberetti';
-                    break; 
+                    break;
+                case 'car_brands':
+                case 'car_types':
+                case 'car_vehicles':
+                    $module = 'car';
+                    break;
             }
         }
 
@@ -649,6 +654,9 @@ class GlacomFunctions
                     ($model == 'GalleryCategory' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->categories) && in_array($modelId, $itemComp->attributes->categories)) ||
                     ($model == 'EventItem' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->events) && in_array($modelId, $itemComp->attributes->events)) ||
                     ($model == 'EventCategory' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->categories) && in_array($modelId, $itemComp->attributes->categories))
+                    ($model == 'CarBrand' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->brands) && in_array($modelId, $itemComp->attributes->brands))
+                    ($model == 'CarType' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->types) && in_array($modelId, $itemComp->attributes->types))
+                    ($model == 'CarVehicle' && $itemComp->layout == $componentLayout && !is_null($itemComp->attributes->vehicles) && in_array($modelId, $itemComp->attributes->vehicles))
                     )
                         $outData[]=[__($currentModel), 'ID: '.$rowItem->id, $rowItem->name];
                 }
