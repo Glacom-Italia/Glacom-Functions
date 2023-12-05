@@ -497,6 +497,12 @@ class GlacomFunctions
                 case 'car_vehicles':
                     $module = 'car';
                     break;
+                case 'blog_articles':
+                case 'blog_categories':
+                case 'blog_tags':
+                case 'blog_authors':
+                    $module = 'blog';
+                    break;
             }
         }
 
