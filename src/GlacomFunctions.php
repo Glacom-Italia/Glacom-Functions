@@ -31,6 +31,17 @@ use App\Models\Gallery\GalleryCategory;
 use App\Models\Gallery\GalleryItem;
 use App\Models\Event\EventCategory;
 use App\Models\Event\EventItem;
+use App\Nova\Core\CorePage as NovaCorePage;
+use App\Nova\Core\CoreBanner as NovaCoreBanner;
+use App\Nova\Form\Form as NovaForm;
+use App\Nova\Magazine\MagazineAuthor as NovaMagazineAuthor;
+use App\Nova\Magazine\MagazineGroup as NovaMagazineGroup;
+use App\Nova\Magazine\MagazineNews as NovaMagazineNews;
+use App\Nova\Magazine\MagazineTag as NovaMagazineTag;
+use App\Nova\Gallery\GalleryCategory as NovaGalleryCategory;
+use App\Nova\Gallery\GalleryItem as NovaGalleryItem;
+use App\Nova\Event\EventCategory as NovaEventCategory;
+use App\Nova\Event\EventItem as NovaEventItem;
 
 use Illuminate\Support\Facades\Log;
 
@@ -908,8 +919,9 @@ class GlacomFunctions
                     $listCustomField[] = $tmpField;
                     break;
                 case 'oneToMany':
+                    $nameClassTmp = str_replace('Models', 'Nova', $cfItem->value);
                     $tmpField = MultiSelect::make($labelTmp, $cfItem->name)
-                                    ->options(function() use ($cfItem){
+                                    /*->options(function() use ($cfItem){
                                         // 'value' => 'CorePages', 
                                         //'relation_filter' => ['where' => [['active', '=', '1']], 'order'=>[['name','asc']]]
                                         $options = array();
@@ -929,7 +941,8 @@ class GlacomFunctions
                                         }
                                         
                                         return $options;
-                                    })
+                                    })*/
+                                    ->asyncResource($nameClassTmp)
                                     ->size($sizeTmp)
                                     ->reorderable()
                                     ->taggable()
