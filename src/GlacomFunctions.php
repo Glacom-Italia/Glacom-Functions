@@ -203,6 +203,15 @@ class GlacomFunctions
                                 }    
                             }
                             break;
+                        case 'cantiberetti_products':
+                            if(strpos($urlTmp, '{cantiBerettiProductCode}')){
+                                if(!is_null($data->code)){
+                                    $urlTmp = str_replace('{cantiBerettiProductCode}', $data->code, $urlTmp);
+                                }else{
+                                    $urlTmp = str_replace('{cantiBerettiProductCode}', '', $urlTmp);
+                                }    
+                            }
+                            break;
 
                     }
                     
