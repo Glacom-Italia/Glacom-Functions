@@ -64,7 +64,7 @@ class GlacomFunctions
     public function calculateURL($lang, $table, $model, $modelID, $modelData, $resourceName, $resourceNameAlt=null, $useModrewrite=true){
 
         $newURL = '';
-        if(!$modelData || is_null($modelData)) $data = $model::where('id',$modelID)->first();
+        if(!$modelData || is_null($modelData)) $data = $model::find($modelID);
         else $data = $modelData;
 
         //forzatura per creazione url homepage ($table = 'core_pages' e $data->is_homepage = true
@@ -125,7 +125,7 @@ class GlacomFunctions
                                 }    
                             }
                             if(strpos($urlTmp, '{magazineNewsGroup}')){
-                                $dataNews = $model::where('id',$modelID)->with('magazineGroup')->get()->first();
+                                $dataNews = $model::with('magazineGroup')->find($modelID);
                                 if(!is_null($dataNews->magazineGroup) && count($dataNews->magazineGroup) > 0)
                                     $urlTmp = str_replace('{magazineNewsGroup}', $dataNews->magazineGroup[0]->title[$lang], $urlTmp);
                                 else
@@ -164,7 +164,7 @@ class GlacomFunctions
 
                             break;
                         case 'gallery_items':
-                            $dataItem = $model::where('id',$modelID)->with('GalleryCategory')->get()->first();
+                            $dataItem = $model::with('GalleryCategory')->find($modelID);
                             $galleryControllers = new GalleryController();
                             $galleryCategories = $galleryControllers->generateParentTreeByGalleryCategoryID($dataItem->GalleryCategory[0]->id);
 
