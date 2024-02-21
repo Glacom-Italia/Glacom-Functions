@@ -305,7 +305,7 @@ class GlacomFunctions
      * @return App\Models\Core\CoreUrl
     */
     public function getUrlInfoByUrl($url){
-        $url = CoreUrl::where('url', $url)
+        $url = CoreUrl::with('corePage')->where('url', $url)
             ->orderBy('updated_at', 'desc')
             ->first();
 
